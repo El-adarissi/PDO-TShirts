@@ -94,44 +94,39 @@ router.get('/products/:id', async (req, res) => {
 });
 
 
-
-
 // Add Product
-router.post('/products', uploadOptions.single('image'), async (req, res) => {
-    const file = req.file;
-
-    // Check if file is provided in the request
-    if (!file) {
-        return res.status(400).json({ message: 'No image in the request' });
+router.post('/products', uploadOptions.array('images',10), async (req, res) => { 
+    const files = req.files;
+    console.log("-----------------------------------",typeof files)
+    if (!files || files.length === 0) {
+        return res.status(400).json({ message: 'No images in the request' });
     }
 
-    // Build the file URL
-    const fileName = file.filename;
     const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`;
+    const imageUrls = files.map(file => `${basePath}${file.filename}`);
 
-    // Parse and validate JSON fields
     let colorOptions, sizeOptions;
     try {
         colorOptions = JSON.parse(req.body.colorOptions);
         sizeOptions = JSON.parse(req.body.sizeOptions);
     } catch (parseError) {
-        return res.status(400).json({ message: 'Invalid JSON format for colorOptions or sizerOptions' });
+        return res.status(400).json({ message: 'Invalid JSON format for colorOptions or sizeOptions' });
     }
 
     try {
-        // Create the product
         const newProduct = await Product.create({
             name: req.body.name,
             description: req.body.description,
             richDescription: req.body.richDescription,
-            image: `${basePath}${fileName}`,
+            image: imageUrls[0], 
+            images: imageUrls, 
             oldprice: parseFloat(req.body.oldprice) || 0,
             price: parseFloat(req.body.price) || 0,
             rating: parseFloat(req.body.rating) || 0,
-            isFeatured: req.body.isFeatured === 'true', // Convert to boolean
+            isFeatured: req.body.isFeatured === 'true',
             Category: req.body.Category,
-            colorOptions:colorOptions,
-            sizeOptions:sizeOptions
+            colorOptions: colorOptions || {},
+            sizeOptions: sizeOptions || {},
         });
 
         res.status(201).json(newProduct);
@@ -186,7 +181,6 @@ router.put('/products/update/:id', uploadOptions.single('image'), async (req, re
             Category: req.body.Category,
         };
 
-        // Only set image if a new one is uploaded
         if (imagePath) {
             updatedProductData.image = imagePath;
         }

@@ -25,6 +25,12 @@ const Product = sequelize.define(
       type: DataTypes.STRING(255),
       defaultValue: "",
     },
+    images: {
+      type: DataTypes.JSON,
+      // defaultValue: JSON.stringify([]),
+      defaultValue: JSON.stringify({})
+
+    },
     price: {
       type: DataTypes.FLOAT,
       allowNull: false,

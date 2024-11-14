@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 /* eslint-disable no-unused-vars */
 import "./SizeSelector.css";
 import MainLayout from "../layout/MainLayout";
@@ -22,19 +23,14 @@ import {
 import CheckIcon from "@mui/icons-material/Check";
 import { useLocation } from "react-router-dom";
 
-const colorOptions = [
-  { value: "Red", color: "#f44336" },
-  { value: "Green", color: "#4caf50" },
-];
 const DetailleProducts = () => {
   const location = useLocation();
   const { product } = location.state;
 
   const [quantity, setQuantity] = useState(0);
   const [selectedColors, setSelectedColors] = useState([]);
-  const [selectedSize, setSelectedSize] = useState("S");
   const [showDialog, setShowDialog] = useState(false);
-
+  const [selectedSize, setSelectedSize] = useState(["S"]);
 
   const handleColorToggle = (color) => {
     setSelectedColors((prev) =>
@@ -53,49 +49,104 @@ const DetailleProducts = () => {
   const { id } = useParams();
   const { cartProducts, setCartProducts } = useCart();
 
-  if (!cartProducts) {
-    console.error("Cart context is undefined.");
-    return null;
-  }
+  // if (!cartProducts) {
+  //   console.error("Cart context is undefined.");
+  //   return null;
+  // }
 
   const handleAddToCart = () => {
     if (quantity <= 0) {
       setShowDialog(true);
       return;
     }
-  
+
     setCartProducts((prevCart) => {
       const productIndex = prevCart.findIndex((item) => item.id === product.id);
-  
+
       if (productIndex >= 0) {
         const updatedCart = [...prevCart];
         updatedCart[productIndex] = {
           ...updatedCart[productIndex],
-          size: selectedSize, 
+          size: selectedSize,
           quantity: updatedCart[productIndex].quantity + quantity,
-          color: selectedColors, 
+          color: selectedColors,
         };
         return updatedCart;
       } else {
         return [
           ...prevCart,
-          { ...product, size: selectedSize, quantity, color:selectedColors },
+          { ...product, size: selectedSize, quantity, color: selectedColors },
         ];
       }
     });
   };
-  
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Step 1: Remove square brackets and quotes
+  let imagesString = product.images;
+
+  imagesString = imagesString.replace(/[\[\]"]/g, "");
+
+  const imagesArray = imagesString.split(",").map((item) => item.trim());
+
+  // Function to handle the next image
+  const handleNext = () => {
+    setCurrentIndex((prevIndex) =>
+      prevIndex === imagesArray.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  // Function to handle the previous image
+  const handlePrev = () => {
+    setCurrentIndex((prevIndex) =>
+      prevIndex === 0 ? imagesArray.length - 1 : prevIndex - 1
+    );
+  };
+  const handleSizeToggle = (size) => {
+    setSelectedSize((prev) =>
+      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+    );
+  };
 
   return (
     <MainLayout>
       <div className="flex mt-40 pt-9 bg-white flex-col md:flex-row p-4">
         <Box className="w-full md:w-1/2 flex justify-center items-center p-4">
-          <div className="relative w-full h-[500px] md:h-[500px] max-w-[600px] overflow-hidden rounded-lg shadow flex justify-center items-center">
-            <img
-              src={product.image}
-              alt="Product"
-              className="w-full h-full object-cover"
-            />
+          <div className="relative w-full h-[500px] max-w-[600px] overflow-hidden rounded-lg shadow flex justify-center items-center">
+            {imagesArray.length > 0 ? (
+              <>
+                {/* Image display */}
+                <img
+                  src={imagesArray[currentIndex]}
+                  alt={`Product ${currentIndex + 1}`}
+                  className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
+                />
+                {imagesArray.length === 1 ? (
+                  <p>Images are available</p>
+                ) : (
+                  <>
+                    {/* Previous button */}
+                    <button
+                      onClick={handlePrev}
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
+                    >
+                      &lt;
+                    </button>
+
+                    {/* Next button */}
+                    <button
+                      onClick={handleNext}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
+                    >
+                      &gt;
+                    </button>
+                  </>
+                )}
+              </>
+            ) : (
+              <p>No images available</p>
+            )}
           </div>
         </Box>
 
@@ -106,16 +157,19 @@ const DetailleProducts = () => {
           </Typography>
           <Rating precision={0.1} value={product.rating} readOnly />
           <Typography variant="h4" className="text-gray-700">
-           {product.price} MAD
+            {product.price} MAD
           </Typography>
-          <Typography variant="h6" sx={{ textDecoration: 'line-through' }} className="text-gray-700">
-           {product.oldprice} MAD
+          <Typography
+            variant="h6"
+            sx={{ textDecoration: "line-through" }}
+            className="text-gray-700"
+          >
+            {product.oldprice} MAD
           </Typography>
           <Typography variant="body1" className="text-black">
             {product.richDescription}
           </Typography>
 
-          {/* Size and Quantity Selection */}
           <Box className="flex flex-col items-start space-y-4 mt-4">
             {/* Size Selection */}
             <Typography variant="h8" className="font-bold text-black ">
@@ -123,13 +177,13 @@ const DetailleProducts = () => {
             </Typography>
             <Box className="size-selector">
               <div className="size-options">
-                {JSON.parse(product.sizeOptions).map(({ value, size }) => (
+                {JSON.parse(product.sizeOptions).map((size) => (
                   <button
-                    key={value}
+                    key={size}
                     className={`size-button ${
-                      selectedSize === size ? "selected" : ""
+                      selectedSize.includes(size) ? "selected" : ""
                     }`}
-                    onClick={() => setSelectedSize(size)}
+                    onClick={() => handleSizeToggle(size)} // Use handleSizeToggle for size
                   >
                     {size}
                   </button>
@@ -166,7 +220,7 @@ const DetailleProducts = () => {
                         position: "absolute",
                         top: "50%",
                         left: "50%",
-                        transform: "translate(-50%, -50%)", // Center the icon
+                        transform: "translate(-50%, -50%)",
                       }}
                     />
                   )}

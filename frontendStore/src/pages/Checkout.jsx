@@ -16,7 +16,7 @@ const Checkout = () => {
   const { cartProducts, setCartProducts } = useCart([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const totalAmount = cartProducts.reduce(
-    (sum, product) => sum + product.price,
+    (sum, product) => sum + (product.price * product.quantity),
     0
   );
 
@@ -113,7 +113,7 @@ const Checkout = () => {
                 <div key={index} className="space-y-1">
                   <div className="flex justify-between text-gray-700">
                     <span>{product.name}</span>
-                    <span>{product.price} MAD</span>
+                    <span>{product.price * product.quantity } MAD</span>
                   </div>
                   <div className="text-sm text-gray-500 ml-2">
                     المقاس: {product.size} &nbsp; اللون: {product.color}

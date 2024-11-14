@@ -81,15 +81,18 @@ router.post("/saveorders", async (req, res) => {
       status: "Pending",
       totalPrice:totalAmount,
       userId: user.id,
+      DateOrderd:new Date().toISOString().split('T')[0]
     });
 
     // Process each item in the orderItems array and create entries in OrderProducts
     const orderProductPromises = ordersitems.map(async (item) => {
+
+      const size = Array.isArray(item.size) ? item.size.join(",") : item.size;
       return await OrderProducts.create({
         orderId: newOrder.orderId,
         productId: item.id,
         color: item.color,
-        size: item.size,
+        size:size,
         quantity: item.quantity,
       });
     });
